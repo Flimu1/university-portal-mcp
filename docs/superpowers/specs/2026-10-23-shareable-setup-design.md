@@ -1,0 +1,11 @@
+# Shareable setup
+
+The user wants to send one GitHub link to a friend. Their local agent should install the existing MCP, open a clear login screen, save only that person's authentication and register Codex automatically. Credentials must be entered privately by the person, never in chat. Existing coursework functionality stays intact.
+
+Use the existing Python package and local stdio model. A standard-library bootstrap creates a virtual environment and installs the package. An authenticated loopback wizard offers Moodle login using the existing mobile API; it validates the returned account before saving a private token. Browser-session login remains an advanced fallback. Separate optional IT login uses only the normal observed login form and session bridge; no server administration. Local setup state uses OS-appropriate application-data paths. Account caches are separated. Codex configuration is parsed/updated atomically while preserving unrelated settings; a different existing installation is a conflict unless explicitly replaced.
+
+Approaches considered: local wizard (chosen implementation default: no shared backend, reuses current code); hosted multi-user OAuth service (needs operations and university integration, outside a shareable local installation); manual token/cookie copying (existing fallback, too much work for normal onboarding).
+
+Support macOS, Linux and Windows through Python 3.11+ and platform-neutral path handling; bootstrap may use an existing uv to obtain Python. Do not promise permanent authorization: university session expiry still applies. A doctor command verifies configuration, local paths and account reads without submitting coursework. Repo agent instructions explain installation from a link, the private login boundary, verification and reconnection. First-time installation never schedules or submits anything automatically.
+
+Success: a clean install with a temporary data/config directory reaches the login page, connects synthetic separate accounts, saves no passwords, discovers MCP tools through the generated configuration, and preserves unrelated Codex settings. Run OS CI and a fresh reviewer before publishing. Live real-account read verification uses already authorized credentials only; no passwords are requested in chat.
