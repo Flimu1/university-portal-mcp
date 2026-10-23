@@ -4,7 +4,6 @@ import json
 import logging
 import os
 from pathlib import Path
-import stat
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError

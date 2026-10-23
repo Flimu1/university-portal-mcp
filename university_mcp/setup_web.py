@@ -2,7 +2,6 @@
 from http.server import BaseHTTPRequestHandler,HTTPServer
 from importlib.resources import files
 import json
-from pathlib import Path
 import secrets
 import time
 import webbrowser

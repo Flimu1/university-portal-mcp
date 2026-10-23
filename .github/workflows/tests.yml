@@ -4,14 +4,25 @@ permissions:
   contents: read
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        python: ['3.11', '3.13']
+        include:
+          - os: ubuntu-latest
+            python: '3.11'
+          - os: ubuntu-latest
+            python: '3.13'
+          - os: macos-latest
+            python: '3.13'
+          - os: windows-latest
+            python: '3.13'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m pip install -e '.[test]'
-      - run: python -m pytest -q
+      - name: Clean installer without an account
+        run: python install.py --configure-only --data-dir .local/ci-data --codex-home .local/ci-codex
+      - name: Synthetic tests in installed environment
+        run: python -c "import os,subprocess; from pathlib import Path; p=Path('.venv')/('Scripts/python.exe' if os.name=='nt' else 'bin/python'); subprocess.run([str(p),'-m','pip','install','-e','.[test]'],check=True); subprocess.run([str(p),'-m','pytest','-q'],check=True)"

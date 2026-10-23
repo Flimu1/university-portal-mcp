@@ -4,11 +4,8 @@ The legacy pages use POST for read-only filter selection. Never submit their
 similarly named grade/attendance editing forms. No login/password automation.
 """
 from datetime import datetime, timezone
-import json
-import os
 from pathlib import Path
 import re
-import stat
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup

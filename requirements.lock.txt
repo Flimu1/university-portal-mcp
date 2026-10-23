@@ -62,3 +62,4 @@ tzdata==2026.5
 urllib3==2.8.0
 uvicorn==0.54.0
 xlsxwriter==3.3.0
+tomlkit==0.15.2
