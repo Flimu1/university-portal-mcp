@@ -19,3 +19,5 @@ phase2-verification.json
 extra-api-verification.json
 dist/
 build/
+
+.superpowers/

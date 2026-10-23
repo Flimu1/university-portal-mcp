@@ -7,7 +7,7 @@ name = "university-portal-mcp"
 version = "0.3.0"
 description = "Local university MCP for Moodle materials, coursework and official IT grades and attendance"
 requires-python = ">=3.11"
-dependencies = ["mcp>=1.30,<2", "httpx>=0.28,<1", "beautifulsoup4>=4.13,<5", "pypdf>=6,<7", "markitdown[pdf,docx,pptx,xlsx]>=0.1.9,<1"]
+dependencies = ["mcp>=1.30,<2", "httpx>=0.28,<1", "tomlkit>=0.13,<1", "beautifulsoup4>=4.13,<5", "pypdf>=6,<7", "markitdown[pdf,docx,pptx,xlsx]>=0.1.9,<1"]
 
 [project.optional-dependencies]
 test = ["pytest>=8,<10", "python-docx>=1,<2", "python-pptx>=1,<2"]
