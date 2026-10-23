@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "university-portal-mcp"
+version = "0.3.0"
+description = "Local university MCP for Moodle materials, coursework and official IT grades and attendance"
+requires-python = ">=3.11"
+dependencies = ["mcp>=1.30,<2", "httpx>=0.28,<1", "beautifulsoup4>=4.13,<5", "pypdf>=6,<7", "markitdown[pdf,docx,pptx,xlsx]>=0.1.9,<1"]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<10", "python-docx>=1,<2", "python-pptx>=1,<2"]
+
+[project.scripts]
+university-portal-mcp = "university_mcp.server:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.setuptools.packages.find]
+include = ["university_mcp*"]
