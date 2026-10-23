@@ -72,7 +72,7 @@ def extract_text(path: Path, *, max_unpacked_bytes=MAX_UNPACKED_BYTES, max_text_
 
 
 def _atomic_text(path: Path, text: str):
-    with tempfile.NamedTemporaryFile(mode="w", dir=path.parent, delete=False) as handle:
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent, delete=False) as handle:
         temporary = Path(handle.name)
         handle.write(text)
     os.replace(temporary, path)
@@ -102,7 +102,7 @@ class MaterialStore:
         meta_path = path.with_name(path.name + ".metadata.json")
         if not refresh and path.exists() and meta_path.exists():
             try:
-                cached = json.loads(meta_path.read_text())
+                cached = json.loads(meta_path.read_text(encoding="utf-8"))
                 if (cached.get("source_url") == material["url"] and cached.get("modified_at") == material.get("modified_at")
                         and cached.get("size_bytes") == path.stat().st_size):
                     return {**cached, "cached": True}
@@ -159,7 +159,7 @@ class MaterialStore:
         extraction_dir.mkdir(exist_ok=True, mode=0o700)
         cache = extraction_dir / (downloaded["sha256"] + "-markitdown-" + version("markitdown") + "-v1.json")
         if cache.exists():
-            extracted = json.loads(cache.read_text())
+            extracted = json.loads(cache.read_text(encoding="utf-8"))
         else:
             extracted = extract_text(Path(downloaded["local_path"]))
             _atomic_text(cache, json.dumps(extracted, ensure_ascii=False))

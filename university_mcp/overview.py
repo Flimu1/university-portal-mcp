@@ -254,7 +254,7 @@ class StudyOverview:
             previous = None
             try:
                 if target.stat().st_size <= 8*1024*1024:
-                    previous = json.loads(target.read_text())
+                    previous = json.loads(target.read_text(encoding="utf-8"))
                     if previous.get('user_id') != uid or not isinstance(previous.get('records'), dict):
                         previous = None
             except FileNotFoundError:
@@ -290,7 +290,7 @@ class StudyOverview:
                         'records': merged, 'coverage': sorted(prior | coverage)}
                 fd, tmp = tempfile.mkstemp(prefix='.study-', dir=target.parent)
                 try:
-                    with os.fdopen(fd, 'w') as handle:
+                    with os.fdopen(fd, 'w', encoding='utf-8') as handle:
                         json.dump(body, handle, ensure_ascii=False)
                     os.replace(tmp, target)
                 finally:

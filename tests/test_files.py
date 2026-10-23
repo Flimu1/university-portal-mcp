@@ -215,3 +215,16 @@ def test_long_unicode_filename_allows_markdown_and_metadata_sidecars(tmp_path):
     result = store.read(material(filename="Длиннаялекция" * 20 + ".txt"))
     assert Path(result["markdown_path"]).read_text() == "Lecture text"
     assert len(Path(result["markdown_path"]).name.encode("utf-8")) < 256
+
+def test_cached_unicode_text_uses_utf8_even_with_legacy_system_encoding(tmp_path,monkeypatch):
+    """Windows cp1252 must not determine the encoding of our JSON/Markdown files."""
+    import tempfile
+    from university_mcp.files import _atomic_text
+    original=tempfile.NamedTemporaryFile
+    def legacy_default(*args,**kwargs):
+        kwargs.setdefault('encoding','cp1252')
+        return original(*args,**kwargs)
+    monkeypatch.setattr(tempfile,'NamedTemporaryFile',legacy_default)
+    path=tmp_path/'material.md'
+    _atomic_text(path,'Лекция об учёте')
+    assert path.read_bytes()=='Лекция об учёте'.encode('utf-8')

@@ -30,7 +30,7 @@ def setup(tmp_path):
   elif fn=='mod_forum_get_forums_by_courses':v=[{'id':7,'course':42,'type':'news','name':'News'},{'id':8,'course':42,'type':'general','name':'Chat'}]
   elif fn=='mod_forum_get_forum_discussions':
    assert a['forumid']==['7'];page=int(a.get('page',['0'])[0]);size=int(a.get('perpage',['50'])[0])
-   v={'discussions':([{'discussion':91+i,'name':f'News {i}','message':state['message'],'timemodified':NOW-50,'created':NOW-100} for i in range(size)] if page==0 else [{'discussion':999,'name':'Page2','message':'More','timemodified':NOW-200}]),'warnings':[]}
+   v={'discussions':([{'discussion':91+i,'name':state.get('title',f'News {i}'),'message':state['message'],'timemodified':NOW-50,'created':NOW-100} for i in range(size)] if page==0 else [{'discussion':999,'name':'Page2','message':'More','timemodified':NOW-200}]),'warnings':[]}
   elif fn=='mod_assign_get_assignments':v={'courses':[{'id':42,'assignments':[{'id':103,'cmid':3,'name':'Report','duedate':NOW+500,'cutoffdate':0,'introfiles':[],'introattachments':[]}]}],'warnings':[]}
   elif fn=='mod_quiz_get_quizzes_by_courses':v={'quizzes':[],'warnings':[]}
   elif fn=='mod_assign_get_submission_status':v={'lastattempt':{'submission':{'status':'submitted','plugins':[]},'canedit':False},'warnings':[]}
@@ -102,3 +102,17 @@ def test_different_windows_have_independent_first_baselines(tmp_path):
  assert s.overview(30,False)['changes']==[]
  s.overview(30,True)
  assert s.overview(1,False)['changes']==[]
+
+
+def test_snapshot_uses_utf8_on_legacy_system_encoding(tmp_path,monkeypatch):
+ import os
+ s,st,_=setup(tmp_path);st['title']='Новое занятие'
+ original=os.fdopen
+ def legacy_default(*args,**kwargs):
+  kwargs.setdefault('encoding','cp1252')
+  return original(*args,**kwargs)
+ monkeypatch.setattr(os,'fdopen',legacy_default)
+ s.overview(30,True)
+ saved=next((tmp_path/'state').rglob('study-*.json'))
+ assert 'Новое занятие' in saved.read_text(encoding='utf-8')
+ assert s.overview(30,False)['changes']==[]
