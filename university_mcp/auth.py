@@ -78,14 +78,14 @@ def password_login(username: str, password: str, *, http: httpx.Client | None = 
             http.close()
 
 
-def save_auth(auth: dict, path: Path):
-    path = Path(path).resolve()
-    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    with tempfile.NamedTemporaryFile(mode="w", dir=path.parent, delete=False) as handle:
-        temporary = Path(handle.name)
-        json.dump({"site": auth["site"], "token": auth["token"]}, handle)
-    os.chmod(temporary, 0o600)
-    os.replace(temporary, path)
+def save_auth(auth: dict, path: Path, *, account_id: int | None = None):
+    from .private import save_private_json
+    value = {"site": auth["site"], "token": auth["token"]}
+    if account_id is not None:
+        if type(account_id) is not int or account_id <= 0:
+            raise AuthenticationError("The portal account identity is invalid.")
+        value["account_id"] = account_id
+    save_private_json(path, value)
 
 
 def browser_setup(auth_path: Path):
@@ -121,7 +121,7 @@ def browser_setup(auth_path: Path):
             try:
                 session = json.loads(parse_qs(self.rfile.read(size).decode())["session"][0])
                 auth, identity = exchange_session(session)
-                save_auth(auth, auth_path)
+                save_auth(auth, auth_path, account_id=identity["userid"])
                 outcome["identity"] = identity
                 message = "Connected. You may close this page. Clear the clipboard before continuing."
                 status = 200
@@ -157,7 +157,7 @@ def main():
     try:
         if args.password_login:
             auth, identity = password_login(input("Portal username: "), getpass.getpass("Portal password (not saved): "))
-            save_auth(auth, Path(args.auth_file))
+            save_auth(auth, Path(args.auth_file), account_id=identity["userid"])
         else:
             identity = browser_setup(Path(args.auth_file))
         print(f"Connected user {identity['userid']} ({identity.get('name', '')}); API functions: {identity['function_count']}. Token saved privately; restart the MCP connection.")

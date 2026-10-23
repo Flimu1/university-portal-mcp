@@ -16,6 +16,7 @@ import httpx
 
 from .client import AuthenticationError, PortalError
 from .models import redact
+from .private import load_private_json
 
 IT_ORIGIN = 'https://it-sb.by'
 REPORT_PATHS = {'grades': '/it/FinalGradesPrint.asp', 'attendance': '/it/attendanceprint.asp'}
@@ -76,12 +77,19 @@ class ITPortalClient:
     """
     def __init__(self, auth_file: Path, *, http: httpx.Client | None = None):
         try:
-            path = Path(auth_file)
-            info = path.lstat()
-            if (not stat.S_ISREG(info.st_mode) or info.st_mode & 0o077
-                    or info.st_uid != os.getuid()):
-                raise ValueError('private file required')
-            auth = json.loads(path.read_text())
+            auth = load_private_json(auth_file)
+        except (OSError, ValueError, TypeError):
+            raise AuthenticationError('IT authentication is missing or invalid. Use the local login wizard.') from None
+        self._initialize(auth, http)
+
+    @classmethod
+    def _from_auth(cls, auth, http):
+        instance = cls.__new__(cls)
+        instance._initialize(auth, http)
+        return instance
+
+    def _initialize(self, auth, http):
+        try:
             if auth.get('origin') != IT_ORIGIN:
                 raise ValueError('origin')
             cookie = auth.get('cookie', '')

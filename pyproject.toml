@@ -21,3 +21,6 @@ pythonpath = ["."]
 
 [tool.setuptools.packages.find]
 include = ["university_mcp*"]
+
+[tool.setuptools.package-data]
+university_mcp = ["setup_page.html"]

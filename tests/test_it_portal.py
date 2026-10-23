@@ -1,4 +1,5 @@
 """Synthetic own-account classic ASP contracts; no live student data."""
+import sys
 import json
 from urllib.parse import parse_qs
 
@@ -128,6 +129,7 @@ def test_auth_file_requires_private_permissions_and_pinned_identity(tmp_path):
     from university_mcp.client import PortalError
     with pytest.raises(PortalError):
         client(tmp_path, auth_update={'student_id':''})
+    if sys.platform == 'win32': return
     path = tmp_path / 'auth.json'; path.chmod(0o644)
     from university_mcp.it_portal import ITPortalClient
     with pytest.raises(PortalError): ITPortalClient(path)

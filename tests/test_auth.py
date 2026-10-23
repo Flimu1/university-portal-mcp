@@ -1,6 +1,7 @@
 import base64
 import json
 import stat
+import sys
 from urllib.parse import parse_qs
 
 import httpx
@@ -29,7 +30,7 @@ def test_browser_session_exchange_validates_account_and_persists_only_api_token(
     path = tmp_path / "private" / "auth.json"
     save_auth(auth, path)
     assert json.loads(path.read_text()) == {"site": SITE, "token": token}
-    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    if sys.platform != "win32": assert stat.S_IMODE(path.stat().st_mode) == 0o600
     assert identity["userid"] == 9991
     assert "fixture-session" not in path.read_text() and "unused-private-token" not in path.read_text()
 
