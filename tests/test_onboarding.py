@@ -81,3 +81,13 @@ def test_doctor_reports_missing_login_without_claiming_connection(tmp_path):
     result=doctor(data,home)
     assert result['configured'] and result['moodle']['status']=='needs_login'
     assert result['it']['status']=='needs_login' and result['ready'] is False
+
+def test_doctor_json_prints_safely_to_non_utf8_terminal(tmp_path,monkeypatch):
+    import io
+    from university_mcp import onboarding
+    monkeypatch.setattr(onboarding,'doctor',lambda *args:{'configured':True,'ready':True,'moodle':{'status':'connected','name':'Студент'}})
+    output=io.BytesIO();terminal=io.TextIOWrapper(output,encoding='cp1252',write_through=True)
+    monkeypatch.setattr(sys,'stdout',terminal)
+    assert onboarding.main(['--doctor','--live'])==0
+    value=json.loads(output.getvalue().decode('cp1252'))
+    assert value['moodle']['name']=='Студент'

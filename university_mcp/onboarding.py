@@ -125,7 +125,7 @@ def main(argv=None):
     try:
         if args.doctor:
             result=doctor(args.data_dir,args.codex_home,args.live)
-            print(json.dumps(result,ensure_ascii=False,indent=2))
+            print(json.dumps(result,ensure_ascii=True,indent=2))
             return 0 if result['ready'] or (not args.live and result['configured']) else 1
         configure_codex(Path(sys.executable),args.data_dir,args.codex_home,args.replace)
         print('1/3 Python environment ready.\n2/3 Codex connection configured.',flush=True)
