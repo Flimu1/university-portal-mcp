@@ -1,8 +1,9 @@
 """Short-lived loopback-only login UI. Passwords are used in memory and never logged."""
-from http.server import BaseHTTPRequestHandler,HTTPServer
+from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from importlib.resources import files
 import json
 import secrets
+import threading
 import time
 import webbrowser
 
@@ -30,7 +31,13 @@ def create_setup_server(data_dir,*,moodle_http=None,it_http=None):
     csrf=secrets.token_urlsafe(32)
     nonce=secrets.token_urlsafe(24)
 
+    mutation_lock=threading.Lock()
+
     class Handler(BaseHTTPRequestHandler):
+        def setup(self):
+            super().setup()
+            self.connection.settimeout(5)
+
         def log_message(self,*args):pass
 
         def respond(self,status,body,html=False):
@@ -57,6 +64,14 @@ def create_setup_server(data_dir,*,moodle_http=None,it_http=None):
             return self.respond(404,{'error':'Setup link is unavailable.'})
 
         def do_POST(self):
+            if not mutation_lock.acquire(blocking=False):
+                return self.respond(409,{'error':'Another connection is being saved. Wait and retry.'})
+            try:
+                self.post_action()
+            finally:
+                mutation_lock.release()
+
+        def post_action(self):
             if (not self.valid_host() or self.headers.get('Origin')!=self.server.origin
                     or self.headers.get('X-Setup-CSRF')!=csrf):
                 return self.respond(403,{'error':'Open the local setup link again.'})
@@ -96,7 +111,9 @@ def create_setup_server(data_dir,*,moodle_http=None,it_http=None):
             except Exception:
                 return self.respond(500,{'error':'The connection could not be saved. Check local permissions and retry.'})
 
-    server=HTTPServer(('127.0.0.1',0),Handler)
+    server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+    server.daemon_threads=True
+    server.block_on_close=False
     server.timeout=1
     server.origin=f'http://127.0.0.1:{server.server_port}'
     server.route,server.csrf,server.finished=route,csrf,False

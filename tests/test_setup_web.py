@@ -80,9 +80,10 @@ def test_refreshing_account_separates_moodle_cache(tmp_path,monkeypatch):
     monkeypatch.setenv('UNIVERSITY_MCP_STATE_DIR',str(tmp_path/'state'))
     monkeypatch.setenv('UNIVERSITY_MCP_DOWNLOAD_DIR',str(tmp_path/'materials'))
     with wizard(tmp_path) as (s,c):
-        post(s,c);one,_=_load_services()
-        post(s,c,username='two');two,_=_load_services()
+        post(s,c);one,first_files=_load_services()
+        post(s,c,username='two');two,second_files=_load_services()
         assert one.data_dir!=two.data_dir
+        assert first_files.download_dir!=second_files.download_dir
         one.http.close();two.http.close()
 
 
@@ -109,3 +110,29 @@ def test_optional_it_login_uses_own_credentials_and_private_file(tmp_path):
         saved=json.loads((tmp_path/'it-auth.json').read_text())
         assert saved['student_id']=='9991' and saved['cookie']=='ASPSESSIONIDTEST=FIXTURESESSION'
         assert 'FIXTURESESSION' not in result.text and 'private-password' not in result.text
+
+def test_stalled_connection_does_not_block_another_browser_request(tmp_path):
+    import socket
+    with wizard(tmp_path) as (s,c):
+        stalled=socket.create_connection(('127.0.0.1',s.server_port))
+        try:
+            stalled.sendall(b'G')
+            response=c.get(s.route,timeout=1)
+            assert response.status_code==200
+        finally:stalled.close()
+
+def test_second_account_cannot_reuse_first_accounts_download(tmp_path,monkeypatch):
+    from university_mcp.server import _load_services
+    from university_mcp.client import PortalError
+    from test_files import material
+    monkeypatch.setenv('UNIVERSITY_MCP_AUTH_FILE',str(tmp_path/'auth.json'))
+    monkeypatch.setenv('UNIVERSITY_MCP_STATE_DIR',str(tmp_path/'state'))
+    monkeypatch.setenv('UNIVERSITY_MCP_DOWNLOAD_DIR',str(tmp_path/'materials'))
+    with wizard(tmp_path) as (s,c):
+        post(s,c);one,first=_load_services()
+        one.http=httpx.Client(transport=httpx.MockTransport(lambda r:httpx.Response(200,content=b'Private account one',headers={'content-type':'text/plain'})))
+        first.download(material('notes.txt'))
+        post(s,c,username='two');two,second=_load_services()
+        two.http=httpx.Client(transport=httpx.MockTransport(lambda r:httpx.Response(403)))
+        with pytest.raises(PortalError):second.download(material('notes.txt'))
+        one.http.close();two.http.close()

@@ -40,6 +40,8 @@ def _load_services():
             raise AuthenticationError("Local account identity is invalid; sign in again.")
         state = state / ("account-" + str(auth["account_id"]))
     downloads = Path(os.environ.get("UNIVERSITY_MCP_DOWNLOAD_DIR", str(state / "downloads"))).expanduser().resolve()
+    if "account_id" in auth:
+        downloads = downloads / ("account-" + str(auth["account_id"]))
     client = MoodleClient(auth["token"], state)
     return client, MaterialStore(client, downloads)
 
